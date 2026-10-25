@@ -35,7 +35,9 @@ h1{font-size:22px;margin:0;color:var(--deep);flex:1;font-weight:700}
 .seg button.p.on{background:var(--pink);border-color:var(--pink);color:#fff}
 .seg button.a.on{background:var(--plum);border-color:var(--plum);color:#fff}
 .quick{display:flex;gap:8px;margin:4px 0 12px}
-.quick .btn{flex:1;font-size:14px;padding:9px}
+.quick .btn{flex:1;font-size:13px;padding:9px 4px}
+.btn:disabled{opacity:.4}
+.hol{text-align:center;color:var(--deep);border-style:dashed}
 .pct{font-size:24px;font-weight:700;color:var(--deep)}
 .bar{height:10px;background:#ffe0ed;border-radius:8px;overflow:visible;margin:8px 0 6px;position:relative}
 .bar i{display:block;height:100%;border-radius:8px}
@@ -68,9 +70,11 @@ textarea{height:100px;font:12px monospace}
     </div>
     <div class="quick">
       <button class="btn" id="allp">All present</button>
+      <button class="btn" id="hol">Holiday</button>
       <button class="btn" id="clr">Clear day</button>
       <button class="btn" id="tod">Today</button>
     </div>
+    <div id="holbanner" class="card hol hidden">♡ Holiday ♡<div class="sub">No classes counted for this day. Your percentages stay the same.</div></div>
     <div id="list"></div>
     <div class="small">Tap P or A for each class that happened. No tap means no class, so it isn’t counted. Tap again to undo.</div>
   </section>
@@ -129,7 +133,7 @@ var SUBJECTS=[
  {id:"mnfl",n:"MNF Lab",s:"Lab"},
  {id:"cccl",n:"CCCL",s:"Cyber Crime & Cyber Laws"}
 ];
-var NAME={};SUBJECTS.forEach(function(s){NAME[s.id]=s.n});
+var NAME={};SUBJECTS.forEach(function(s){NAME[s.id]=s.n});NAME._holiday="Holiday";
 var KEY="attendance-tracker-v2",CFGKEY="attendance-cfg-v2";
 var state={records:{},target:75,dirty:{},dirtyTarget:false};
 var cfg={url:"",pass:""};
@@ -151,6 +155,11 @@ function renderDay(){
   $("dlabel").textContent=d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"});
   $("dsub").textContent=cur===fmt(new Date())?"Today":d.getFullYear();
   var rec=state.records[cur]||{},h="";
+  var hol=rec._holiday==="H";
+  $("holbanner").classList.toggle("hidden",!hol);
+  $("hol").textContent=hol?"Undo holiday":"Holiday";
+  $("allp").disabled=hol;
+  if(hol){$("list").innerHTML="";return;}
   SUBJECTS.forEach(function(s){
     var v=rec[s.id];
     h+='<div class="card"><div class="row"><div><div class="name">'+s.n+'</div><div class="sub">'+s.s+'</div></div>'+
@@ -175,6 +184,15 @@ $("prev").onclick=function(){shift(-1)};
 $("next").onclick=function(){shift(1)};
 $("tod").onclick=function(){cur=fmt(new Date());renderDay();};
 $("allp").onclick=function(){var r={};SUBJECTS.forEach(function(s){r[s.id]="P"});state.records[cur]=r;changed(cur);renderDay();};
+$("hol").onclick=function(){
+  var rec=state.records[cur]||{};
+  if(rec._holiday==="H"){delete state.records[cur];}
+  else{
+    if(Object.keys(rec).length&&!confirm("This day already has marks. Mark it as a holiday and clear them?"))return;
+    state.records[cur]={_holiday:"H"};
+  }
+  changed(cur);renderDay();
+};
 $("clr").onclick=function(){delete state.records[cur];changed(cur);renderDay();};
 
 /* ---------- stats view ---------- */
@@ -213,7 +231,8 @@ function renderStats(){
   });
   $("stats").innerHTML=h;
   $("opct").textContent=tt?(tp*100/tt).toFixed(1)+"%":"–";
-  $("oline").innerHTML=tp+" present of "+tt+" classes<br>Target "+tg+"%";
+  var hd=Object.keys(state.records).filter(function(d){return state.records[d]._holiday==="H"}).length;
+  $("oline").innerHTML=tp+" present of "+tt+" classes<br>Target "+tg+"%"+(hd?"<br>Holidays: "+hd:"");
 }
 
 /* ---------- nav ---------- */
