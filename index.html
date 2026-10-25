@@ -92,6 +92,9 @@ textarea{height:100px;font:12px monospace}
       <input type="password" id="pass" placeholder="Passcode" autocomplete="off">
       <div class="quick" style="margin-top:10px"><button class="btn" id="savecfg">Save and sync</button><button class="btn" id="syncnow">Sync now</button></div>
       <div class="small" id="syncmsg"></div>
+      <button class="btn" id="mklink" style="width:100%;margin-top:6px">Make my setup link</button>
+      <input type="text" id="lnk" class="hidden" readonly>
+      <div class="small">Save the link in Notes or a bookmark. If Safari ever forgets your settings, opening that link reconnects the app in one tap. Keep it private, it contains your passcode.</div>
     </div>
     <div class="card">
       <div class="name">Required attendance %</div>
@@ -139,6 +142,15 @@ var state={records:{},target:75,dirty:{},dirtyTarget:false};
 var cfg={url:"",pass:""};
 try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.records)state=o;}}catch(e){}
 try{var c=localStorage.getItem(CFGKEY);if(c)cfg=JSON.parse(c);}catch(e){}
+(function(){
+  var m=location.hash.match(/^#setup=(.+)$/);
+  if(!m)return;
+  try{
+    var o=JSON.parse(decodeURIComponent(atob(decodeURIComponent(m[1]))));
+    if(o.u&&o.p){cfg={url:o.u,pass:o.p};localStorage.setItem(CFGKEY,JSON.stringify(cfg));}
+  }catch(e){}
+  try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+})();
 if(!state.target)state.target=75;
 if(!state.dirty)state.dirty={};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
@@ -304,6 +316,13 @@ async function sync(){
   syncing=false;
   if(again){again=false;sync();}
 }
+$("mklink").onclick=function(){
+  if(!ready()){$("syncmsg").textContent="Save your URL and passcode first, then make the link.";return;}
+  var l=location.origin+location.pathname+"#setup="+encodeURIComponent(btoa(encodeURIComponent(JSON.stringify({u:cfg.url,p:cfg.pass}))));
+  var i=$("lnk");i.classList.remove("hidden");i.value=l;i.select();
+  try{navigator.clipboard.writeText(l);}catch(e){}
+  $("syncmsg").textContent="Link ready. Copy it into Notes.";
+};
 $("pill").onclick=function(){sync()};
 $("syncnow").onclick=function(){sync()};
 $("savecfg").onclick=function(){
@@ -334,6 +353,7 @@ $("imp").onclick=function(){
   }catch(e){$("box").value="That backup text didn’t work. Paste the full text and try again.";}
 };
 
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 renderDay();
 if(ready())sync();else setStatus("","Not connected");
 </script>
