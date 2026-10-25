@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffb3d1">
+<title>Attendance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffe3ee;--dot:#ffd0e3;--card:#fff;--line:#ffc2da;--text:#5a2a45;--muted:#b0728f;--pink:#ff6fa5;--deep:#e0356a;--soft:#fff0f6;--plum:#8e6aa8;--mint:#2fbf8a;--amber:#f5a524;--red:#e5484d;color-scheme:light}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;color:var(--text);background-color:var(--bg);background-image:radial-gradient(var(--dot) 2.5px,transparent 3px);background-size:24px 24px;font:600 16px/1.4 "Quicksand",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0px) 0 calc(88px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;padding:14px}
+.head{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+.head svg{width:44px;height:30px;flex-shrink:0}
+h1{font-size:22px;margin:0;color:var(--deep);flex:1;font-weight:700}
+.pill{border:2px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:6px 10px;font:700 12px "Quicksand",system-ui,sans-serif;white-space:nowrap}
+.pill.ok{color:var(--mint);border-color:#b5ecd5}
+.pill.err{color:var(--red);border-color:#f6c1c3}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:12px;margin-bottom:10px;box-shadow:0 3px 0 var(--line)}
+.datebar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.datebar button,.btn{background:var(--card);color:var(--deep);border:2px solid var(--line);border-radius:14px;padding:10px 14px;font:700 16px "Quicksand",system-ui,sans-serif;box-shadow:0 3px 0 var(--line)}
+.datebar button:active,.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.datebar .mid{flex:1;text-align:center}
+.datebar .mid b{display:block;font-size:18px;color:var(--deep)}
+.datebar .mid span{font-size:13px;color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.name{font-weight:700}
+.sub{font-size:12px;color:var(--muted);font-weight:600}
+.seg{display:flex;gap:6px;flex-shrink:0}
+.seg button{width:56px;padding:10px 0;border-radius:14px;border:2px solid var(--line);background:var(--soft);color:var(--muted);font:700 16px "Quicksand",system-ui,sans-serif}
+.seg button.p.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.seg button.a.on{background:var(--plum);border-color:var(--plum);color:#fff}
+.quick{display:flex;gap:8px;margin:4px 0 12px}
+.quick .btn{flex:1;font-size:14px;padding:9px}
+.pct{font-size:24px;font-weight:700;color:var(--deep)}
+.bar{height:10px;background:#ffe0ed;border-radius:8px;overflow:visible;margin:8px 0 6px;position:relative}
+.bar i{display:block;height:100%;border-radius:8px}
+.bar u{position:absolute;top:-3px;bottom:-3px;width:3px;border-radius:2px;background:var(--text);opacity:.55}
+.msg{font-size:13px}
+.good{color:var(--mint)}.low{color:var(--red)}.edge{color:#c98411}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:2px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:14px 0;font:700 15px "Quicksand",system-ui,sans-serif}
+nav button.on{color:var(--deep)}
+input[type=number],input[type=date],input[type=text],input[type=password],textarea{width:100%;background:var(--soft);color:var(--text);border:2px solid var(--line);border-radius:14px;padding:10px;font:600 16px "Quicksand",system-ui,sans-serif;margin-top:6px}
+textarea{height:100px;font:12px monospace}
+.hidden{display:none}
+.tot{display:flex;justify-content:space-between;align-items:center}
+.small{font-size:13px;color:var(--muted);margin:6px 0;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg viewBox="0 0 48 32" aria-hidden="true"><path d="M24 16 L4 3 Q-1 16 4 29 Z" fill="#ff6fa5"/><path d="M24 16 L44 3 Q49 16 44 29 Z" fill="#ff6fa5"/><circle cx="24" cy="16" r="6.5" fill="#e0356a"/></svg>
+    <h1>Attendance ♡</h1>
+    <button class="pill" id="pill">Not connected</button>
+  </div>
+
+  <section id="v-today">
+    <div class="datebar">
+      <button id="prev" aria-label="Previous day">‹</button>
+      <div class="mid"><b id="dlabel"></b><span id="dsub"></span></div>
+      <button id="next" aria-label="Next day">›</button>
+    </div>
+    <div class="quick">
+      <button class="btn" id="allp">All present</button>
+      <button class="btn" id="clr">Clear day</button>
+      <button class="btn" id="tod">Today</button>
+    </div>
+    <div id="list"></div>
+    <div class="small">Tap P or A for each class that happened. No tap means no class, so it isn’t counted. Tap again to undo.</div>
+  </section>
+
+  <section id="v-stats" class="hidden">
+    <div class="card tot"><div><div class="sub">Overall</div><div class="pct" id="opct"></div></div><div class="sub" id="oline" style="text-align:right"></div></div>
+    <div id="stats"></div>
+  </section>
+
+  <section id="v-set" class="hidden">
+    <div class="card">
+      <div class="name">Google Sheet sync</div>
+      <div class="small">Paste your Apps Script web app URL and the passcode you set in the script. These stay on this phone only.</div>
+      <input type="text" id="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" autocapitalize="off">
+      <input type="password" id="pass" placeholder="Passcode" autocomplete="off">
+      <div class="quick" style="margin-top:10px"><button class="btn" id="savecfg">Save and sync</button><button class="btn" id="syncnow">Sync now</button></div>
+      <div class="small" id="syncmsg"></div>
+    </div>
+    <div class="card">
+      <div class="name">Required attendance %</div>
+      <div class="small">Used for the “can miss” and “need to attend” numbers.</div>
+      <input type="number" id="target" min="1" max="99">
+    </div>
+    <div class="card">
+      <div class="name">Past days</div>
+      <div class="small">Jump to any date to add or fix attendance.</div>
+      <input type="date" id="jump">
+    </div>
+    <div class="card">
+      <div class="name">Manual backup</div>
+      <div class="small">Extra safety copy as text, in case you want one outside the sheet.</div>
+      <div class="quick"><button class="btn" id="exp">Create backup</button><button class="btn" id="imp">Restore</button></div>
+      <textarea id="box" placeholder="Backup text shows here. To restore, paste it here and tap Restore."></textarea>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button data-v="today" class="on">♡ Today</button>
+  <button data-v="stats">★ Stats</button>
+  <button data-v="set">✿ Settings</button>
+</nav>
+
+<script>
+var SUBJECTS=[
+ {id:"ifscsi",n:"IFSCSI",s:"Forensic Science & Crime Scene Inv."},
+ {id:"ifscsil",n:"IFSCSI Lab",s:"Lab"},
+ {id:"py",n:"Python (Guvi)",s:"Python Programming"},
+ {id:"pyl",n:"Python Lab (Guvi)",s:"Lab"},
+ {id:"ca",n:"CA",s:"Computer Architecture"},
+ {id:"cal",n:"CA Lab",s:"Lab"},
+ {id:"oe",n:"Data Analysis (OE)",s:"Statistical Tools"},
+ {id:"dfi",n:"DFI",s:"Digital Forensic Investigation"},
+ {id:"dfil",n:"DFI Lab",s:"Lab"},
+ {id:"mnf",n:"MNF",s:"Mobile Network Forensics"},
+ {id:"mnfl",n:"MNF Lab",s:"Lab"},
+ {id:"cccl",n:"CCCL",s:"Cyber Crime & Cyber Laws"}
+];
+var NAME={};SUBJECTS.forEach(function(s){NAME[s.id]=s.n});
+var KEY="attendance-tracker-v2",CFGKEY="attendance-cfg-v2";
+var state={records:{},target:75,dirty:{},dirtyTarget:false};
+var cfg={url:"",pass:""};
+try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.records)state=o;}}catch(e){}
+try{var c=localStorage.getItem(CFGKEY);if(c)cfg=JSON.parse(c);}catch(e){}
+if(!state.target)state.target=75;
+if(!state.dirty)state.dirty={};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function pad(n){return n<10?"0"+n:""+n}
+function fmt(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+function stamp(){return Date.now()+Math.random()}
+var cur=fmt(new Date()),view="today";
+var $=function(i){return document.getElementById(i)};
+
+/* ---------- today view ---------- */
+function renderDay(){
+  var d=parse(cur);
+  $("dlabel").textContent=d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"});
+  $("dsub").textContent=cur===fmt(new Date())?"Today":d.getFullYear();
+  var rec=state.records[cur]||{},h="";
+  SUBJECTS.forEach(function(s){
+    var v=rec[s.id];
+    h+='<div class="card"><div class="row"><div><div class="name">'+s.n+'</div><div class="sub">'+s.s+'</div></div>'+
+    '<div class="seg"><button class="p'+(v==="P"?" on":"")+'" data-id="'+s.id+'" data-v="P">P</button>'+
+    '<button class="a'+(v==="A"?" on":"")+'" data-id="'+s.id+'" data-v="A">A</button></div></div></div>';
+  });
+  $("list").innerHTML=h;
+}
+function changed(day){state.dirty[day]=stamp();save();schedule();}
+function setMark(id,v){
+  var rec=state.records[cur]||(state.records[cur]={});
+  if(rec[id]===v)delete rec[id];else rec[id]=v;
+  if(!Object.keys(rec).length)delete state.records[cur];
+  changed(cur);renderDay();
+}
+$("list").addEventListener("click",function(e){
+  var b=e.target.closest("button");if(!b)return;
+  setMark(b.dataset.id,b.dataset.v);
+});
+function shift(n){var d=parse(cur);d.setDate(d.getDate()+n);cur=fmt(d);renderDay();}
+$("prev").onclick=function(){shift(-1)};
+$("next").onclick=function(){shift(1)};
+$("tod").onclick=function(){cur=fmt(new Date());renderDay();};
+$("allp").onclick=function(){var r={};SUBJECTS.forEach(function(s){r[s.id]="P"});state.records[cur]=r;changed(cur);renderDay();};
+$("clr").onclick=function(){delete state.records[cur];changed(cur);renderDay();};
+
+/* ---------- stats view ---------- */
+function calc(){
+  var out={};
+  SUBJECTS.forEach(function(s){out[s.id]={p:0,t:0}});
+  Object.keys(state.records).forEach(function(day){
+    var r=state.records[day];
+    Object.keys(r).forEach(function(id){
+      if(!out[id])return;
+      out[id].t++;if(r[id]==="P")out[id].p++;
+    });
+  });
+  return out;
+}
+function advice(p,t,tg){
+  if(t===0)return {c:"",m:"No classes logged yet"};
+  var pct=p*100/t;
+  if(pct>=tg){
+    var can=Math.floor(p*100/tg-t+1e-9);
+    if(can<=0)return {c:"edge",m:"! On the line. Missing the next class drops you below "+tg+"%"};
+    return {c:"good",m:"✓ Can miss "+can+" more class"+(can===1?"":"es")+" and stay at "+tg+"%+"};
+  }
+  var need=Math.ceil((tg*t-100*p)/(100-tg)-1e-9);
+  return {c:"low",m:"✗ Attend the next "+need+" class"+(need===1?"":"es")+" in a row to reach "+tg+"%"};
+}
+function renderStats(){
+  var c=calc(),tg=state.target,tp=0,tt=0,h="";
+  SUBJECTS.forEach(function(s){
+    var x=c[s.id];tp+=x.p;tt+=x.t;
+    var pct=x.t?x.p*100/x.t:0,a=advice(x.p,x.t,tg);
+    var col=!x.t?"#ffe0ed":pct>=tg+5?"var(--mint)":pct>=tg?"var(--amber)":"var(--red)";
+    h+='<div class="card"><div class="row"><div class="name">'+s.n+'</div><div class="pct">'+(x.t?pct.toFixed(1)+"%":"–")+'</div></div>'+
+    '<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i><u style="left:'+tg+'%"></u></div>'+
+    '<div class="row"><div class="msg '+a.c+'">'+a.m+'</div><div class="sub">'+x.p+"/"+x.t+'</div></div></div>';
+  });
+  $("stats").innerHTML=h;
+  $("opct").textContent=tt?(tp*100/tt).toFixed(1)+"%":"–";
+  $("oline").innerHTML=tp+" present of "+tt+" classes<br>Target "+tg+"%";
+}
+
+/* ---------- nav ---------- */
+var views=["today","stats","set"];
+function show(v){
+  view=v;
+  views.forEach(function(x){$("v-"+x).classList.toggle("hidden",x!==v)});
+  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v===v)});
+  if(v==="stats")renderStats();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){show(b.dataset.v)};});
+
+/* ---------- sync ---------- */
+var syncing=false,again=false,timer=null;
+function setStatus(kind,msg){
+  var p=$("pill");p.className="pill"+(kind==="ok"?" ok":kind==="err"?" err":"");
+  p.textContent=msg;$("syncmsg").textContent=msg;
+}
+function now(){return new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
+function ready(){return cfg.url&&cfg.pass}
+function schedule(){
+  if(!ready()){setStatus("","Not connected");return;}
+  clearTimeout(timer);timer=setTimeout(sync,800);
+}
+async function post(obj){
+  var r=await fetch(cfg.url,{method:"POST",body:JSON.stringify(obj)});
+  var j=await r.json();
+  if(!j.ok)throw new Error(j.error||"Sync failed");
+  return j;
+}
+async function pull(){
+  var r=await fetch(cfg.url+"?action=pull&pass="+encodeURIComponent(cfg.pass));
+  var j=await r.json();
+  if(!j.ok)throw new Error(j.error||"Sync failed");
+  return j;
+}
+async function sync(){
+  if(!ready()){setStatus("","Not connected");return;}
+  if(syncing){again=true;return;}
+  syncing=true;setStatus("","Syncing…");
+  try{
+    var days=Object.keys(state.dirty);
+    for(var i=0;i<days.length;i++){
+      var day=days[i],sent=state.dirty[day],rec=state.records[day]||{};
+      var marks=Object.keys(rec).map(function(id){return {id:id,name:NAME[id]||id,status:rec[id]}});
+      await post({action:"setDay",pass:cfg.pass,date:day,marks:marks});
+      if(state.dirty[day]===sent)delete state.dirty[day];
+      save();
+    }
+    if(state.dirtyTarget){
+      var t=state.target;
+      await post({action:"setTarget",pass:cfg.pass,target:t});
+      if(state.target===t)state.dirtyTarget=false;
+      save();
+    }
+    var r=await pull(),recs={};
+    r.rows.forEach(function(x){(recs[x[0]]||(recs[x[0]]={}))[x[1]]=x[2];});
+    Object.keys(state.dirty).forEach(function(d){if(state.records[d])recs[d]=state.records[d];else delete recs[d];});
+    state.records=recs;
+    if(!state.dirtyTarget&&r.target)state.target=r.target;
+    save();
+    $("target").value=state.target;
+    renderDay();if(view==="stats")renderStats();
+    setStatus("ok","♡ Synced "+now());
+  }catch(e){
+    setStatus("err",(navigator.onLine===false?"Offline, will sync later":"Sync problem: "+e.message));
+  }
+  syncing=false;
+  if(again){again=false;sync();}
+}
+$("pill").onclick=function(){sync()};
+$("syncnow").onclick=function(){sync()};
+$("savecfg").onclick=function(){
+  cfg={url:$("url").value.trim(),pass:$("pass").value};
+  try{localStorage.setItem(CFGKEY,JSON.stringify(cfg));}catch(e){}
+  if(!ready()){setStatus("","Add both the URL and the passcode");return;}
+  Object.keys(state.records).forEach(function(d){if(!state.dirty[d])state.dirty[d]=stamp();});
+  state.dirtyTarget=true;save();sync();
+};
+window.addEventListener("online",function(){sync()});
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")sync();});
+
+/* ---------- settings ---------- */
+$("url").value=cfg.url||"";$("pass").value=cfg.pass||"";
+$("target").value=state.target;
+$("target").onchange=function(){
+  var v=parseInt(this.value,10);
+  if(v>=1&&v<=99){state.target=v;state.dirtyTarget=true;save();schedule();}else this.value=state.target;
+};
+$("jump").onchange=function(){if(this.value){cur=this.value;renderDay();show("today");}};
+$("exp").onclick=function(){$("box").value=JSON.stringify({records:state.records,target:state.target});$("box").select();};
+$("imp").onclick=function(){
+  try{
+    var o=JSON.parse($("box").value);if(!o||!o.records)throw 0;
+    state.records=o.records;state.target=o.target||75;state.dirty={};
+    Object.keys(state.records).forEach(function(d){state.dirty[d]=stamp();});
+    state.dirtyTarget=true;save();$("target").value=state.target;renderDay();schedule();$("box").value="Restored.";
+  }catch(e){$("box").value="That backup text didn’t work. Paste the full text and try again.";}
+};
+
+renderDay();
+if(ready())sync();else setStatus("","Not connected");
+</script>
+</body>
+</html>
